@@ -1,16 +1,24 @@
+import { denormalize, normalize } from "@/helpers";
 import { OHLC } from "@/types";
 import * as tf from "@tensorflow/tfjs-node";
 
-// #region нормализация
+// #region подготовка данных
+
 export const prepareData = (data: OHLC[]) => {
   const prices = data.map((d) => d.close); // Извлечение цен закрытия
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const normalizedPrices = prices.map((price) =>
+    normalize(price, minPrice, maxPrice)
+  );
+
   const windowSize = 30; // Размер окна для временного ряда
   const inputs = [];
   const outputs = [];
 
-  for (let i = windowSize; i < prices.length; i++) {
-    const input = prices.slice(i - windowSize, i);
-    const output = prices[i];
+  for (let i = windowSize; i < normalizedPrices.length; i++) {
+    const input = normalizedPrices.slice(i - windowSize, i);
+    const output = normalizedPrices[i];
     inputs.push(input);
     outputs.push(output);
   }
@@ -21,6 +29,8 @@ export const prepareData = (data: OHLC[]) => {
       [inputs.length, windowSize, 1]
     ),
     outputs: tf.tensor2d(outputs, [outputs.length, 1]),
+    minPrice,
+    maxPrice,
   };
 };
 // #endregion
@@ -28,6 +38,7 @@ export const prepareData = (data: OHLC[]) => {
 // #region Создание модели
 export const createModel = (inputShape: number) => {
   const model = tf.sequential();
+
   model.add(
     tf.layers.lstm({
       units: 50,
@@ -35,6 +46,7 @@ export const createModel = (inputShape: number) => {
       inputShape: [inputShape, 1],
     })
   );
+
   model.add(tf.layers.lstm({ units: 50, returnSequences: false }));
   model.add(tf.layers.dense({ units: 1 }));
 
@@ -66,13 +78,21 @@ export const trainModel = async (
 
 // #region  предсказания
 
-export const predictNextValue = (model: tf.Sequential, input: number[]) => {
-  // const inputTensor = tf.tensor2d([input], [1, input.length, 1]);
+export const predictNextValue = (
+  model: tf.LayersModel,
+  input: number[],
+  minPrice: number,
+  maxPrice: number
+) => {
   const inputTensor = tf.tensor3d(
     [input.map((value) => [value])],
     [1, input.length, 1]
   );
+
   const prediction = model.predict(inputTensor) as tf.Tensor;
-  return prediction.dataSync()[0];
+  // return prediction.dataSync()[0];
+
+  const normalizedPrediction = prediction.dataSync()[0];
+  return denormalize(normalizedPrediction, minPrice, maxPrice);
 };
 // #endregion

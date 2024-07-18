@@ -36,7 +36,6 @@ export const getBybitOHLC = async (
 
       return {
         timestamp: localDate,
-
         open: parseFloat(item[1]),
         high: parseFloat(item[2]),
         low: parseFloat(item[3]),

@@ -25,3 +25,11 @@ export const loadData = (filePath: string): Array<OHLC> => {
   const data = fs.readFileSync(filePath, "utf-8");
   return JSON.parse(data);
 };
+
+export const normalize = (value: number, min: number, max: number) => {
+  return (value - min) / (max - min);
+};
+
+export const denormalize = (value: number, min: number, max: number) => {
+  return value * (max - min) + min;
+};
