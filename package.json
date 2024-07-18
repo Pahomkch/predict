@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run": "tsc src/index.ts && node src/index.js"
+    "start": "npx ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/node": "^20.14.11",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }
 }
