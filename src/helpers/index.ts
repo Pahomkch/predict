@@ -20,3 +20,8 @@ export const saveDataToFile = (data: OHLC[], filename: string): void => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
   console.log(`Data has been saved to ${filePath}`);
 };
+
+export const loadData = (filePath: string): Array<OHLC> => {
+  const data = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(data);
+};

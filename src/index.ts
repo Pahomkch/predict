@@ -1,15 +1,32 @@
-import { getBybitOHLC } from "./collect-data";
-import { getStartTime, saveDataToFile } from "./helpers";
+import { loadData } from "./helpers";
+import {
+  createModel,
+  predictNextValue,
+  prepareData,
+  trainModel,
+} from "./network";
+import * as path from "path";
 
 async function main() {
-  const symbol = "ETHUSDT";
-  const interval = "D"; // 1, 3, 5, 15, 30, 60, 120, 240, 360, 720, D, W, M
-  const startTime = getStartTime(3); // Вы можете заменить это на конкретную дату
-  const ohlcData = await getBybitOHLC(symbol, interval, startTime);
-  saveDataToFile(ohlcData, symbol);
-  console.log(
-    `Success. Data for ${symbol}, interval: ${interval} have been saved`
-  );
+  const dataFilePath = path.join(process.cwd(), "src", "data", "ETHUSDT.json");
+  const data = loadData(dataFilePath);
+  const { inputs, outputs } = prepareData(data);
+
+  console.log("Start creating model");
+  const model = createModel(inputs.shape[1]);
+  console.log("*** Success! Model created!");
+
+  await trainModel(model, inputs, outputs).then(() => {
+    console.log("Model trained");
+    model.save("file://./model"); // Сохранение модели в файловую систему
+  });
+  console.log("*** Success! Model learned!");
+
+  // Пример использования модели для прогнозирования
+  // const recentData = data.slice(-30).map((d) => d.close);
+  const recentData = data.map((d) => d.close);
+  const predictedValue = predictNextValue(model, recentData);
+  console.log(`Predicted next value: ${predictedValue}`);
 }
 
 main();

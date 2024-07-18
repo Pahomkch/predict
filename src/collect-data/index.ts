@@ -1,5 +1,6 @@
 import axios from "axios";
 import { OHLC } from "@/types";
+import { getStartTime, saveDataToFile } from "@/helpers";
 
 /**
  *
@@ -20,7 +21,7 @@ export const getBybitOHLC = async (
     symbol: symbol,
     interval: interval,
     start: startTime,
-    limit: 5,
+    limit: 10000,
   };
 
   try {
@@ -49,3 +50,18 @@ export const getBybitOHLC = async (
     return [];
   }
 };
+
+async function collectETH() {
+  const symbol = "ETHUSDT";
+  // const interval = "D";
+  const interval = "D";
+  const startTime = getStartTime(30); // Вы можете заменить это на конкретную дату
+  const ohlcData = await getBybitOHLC(symbol, interval, startTime);
+  saveDataToFile(ohlcData, symbol);
+
+  console.log(
+    `Success. Data for ${symbol}, interval: ${interval} have been saved`
+  );
+}
+
+collectETH();
